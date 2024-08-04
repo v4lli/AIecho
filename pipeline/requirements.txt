@@ -1,0 +1,6 @@
+numpy==2.0.0
+opencv-python==4.10.0.84
+python-dotenv==1.0.1
+requests==2.32.3
+pydantic>=2.8.2
+./api_client

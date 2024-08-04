@@ -1,0 +1,123 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/internal/frame/{resource}/{frame_index}": {
+            "get": {
+                "summary": "Get frames for a particular resource",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "resource ID",
+                        "name": "resource",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "relative frame index",
+                        "name": "frame_index",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "JPEG frame",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/internal/peers/": {
+            "get": {
+                "summary": "Get all currently connected peers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/http.PeerList"
+                        }
+                    }
+                }
+            }
+        },
+        "/internal/transcripts/{resource}": {
+            "post": {
+                "summary": "Forward transcribed frame contents to client",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "resource ID",
+                        "name": "resource",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "transcript container",
+                        "name": "container",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.TranscriptContainer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "http.Peer": {
+            "type": "object",
+            "required": [
+                "pipeline",
+                "uuid"
+            ],
+            "properties": {
+                "pipeline": {
+                    "type": "string"
+                },
+                "uuid": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.PeerList": {
+            "type": "object",
+            "required": [
+                "peers"
+            ],
+            "properties": {
+                "peers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/http.Peer"
+                    }
+                }
+            }
+        },
+        "http.TranscriptContainer": {
+            "type": "object",
+            "required": [
+                "transcript"
+            ],
+            "properties": {
+                "transcript": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

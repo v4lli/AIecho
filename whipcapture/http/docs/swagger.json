@@ -1,0 +1,72 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This backend exposes an API for ingesting video streams and providing them to internal processing APIs.",
+        "title": "AIEcho Ingestion Backend",
+        "contact": {},
+        "license": {
+            "name": "MIT License",
+            "url": "https://opensource.org/licenses/MIT"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/internal/",
+    "paths": {
+        "/internal/frame/{resource}/{frame_index}": {
+            "get": {
+                "summary": "Get frames for a particular resource",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "resource ID",
+                        "name": "resource",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "relative frame index",
+                        "name": "frame_index",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "JPEG frame",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/internal/peers/": {
+            "get": {
+                "summary": "Get all currently connected peers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/http.PeerList"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "http.PeerList": {
+            "type": "object",
+            "properties": {
+                "peers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}

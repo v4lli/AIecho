@@ -1,0 +1,38 @@
+
+(default) {
+	encode zstd gzip
+	log {
+		output stdout
+		level info
+	}
+}
+
+http://localhost:8080 {
+	import default
+
+	root * /srv
+
+	route /* {
+		try_files {path} index.html
+		file_server
+	}
+
+	handle_errors {
+		rewrite * /srv/public.html
+	}
+}
+
+http://localhost:8081 {
+	handle_path /internal* {
+		# 👻
+		respond "Not found" 404
+	}
+
+	# Handle all other requests
+	handle {
+		reverse_proxy http://whipcapture:9091 {
+            header_up Host localhost:9091
+		}
+	}
+}
+

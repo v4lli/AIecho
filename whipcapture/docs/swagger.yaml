@@ -1,0 +1,78 @@
+definitions:
+  http.Peer:
+    properties:
+      pipeline:
+        type: string
+      uuid:
+        type: string
+    required:
+    - pipeline
+    - uuid
+    type: object
+  http.PeerList:
+    properties:
+      peers:
+        items:
+          $ref: '#/definitions/http.Peer'
+        type: array
+    required:
+    - peers
+    type: object
+  http.TranscriptContainer:
+    properties:
+      transcript:
+        type: string
+    required:
+    - transcript
+    type: object
+info:
+  contact: {}
+paths:
+  /internal/frame/{resource}/{frame_index}:
+    get:
+      parameters:
+      - description: resource ID
+        in: path
+        name: resource
+        required: true
+        type: string
+      - description: relative frame index
+        in: path
+        name: frame_index
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: JPEG frame
+          schema:
+            type: string
+      summary: Get frames for a particular resource
+  /internal/peers/:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.PeerList'
+      summary: Get all currently connected peers
+  /internal/transcripts/{resource}:
+    post:
+      parameters:
+      - description: resource ID
+        in: path
+        name: resource
+        required: true
+        type: string
+      - description: transcript container
+        in: body
+        name: container
+        required: true
+        schema:
+          $ref: '#/definitions/http.TranscriptContainer'
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+      summary: Forward transcribed frame contents to client
+swagger: "2.0"

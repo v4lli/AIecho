@@ -1,0 +1,48 @@
+basePath: /internal/
+definitions:
+  http.PeerList:
+    properties:
+      peers:
+        items:
+          type: string
+        type: array
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This backend exposes an API for ingesting video streams and providing
+    them to internal processing APIs.
+  license:
+    name: MIT License
+    url: https://opensource.org/licenses/MIT
+  title: AIEcho Ingestion Backend
+  version: "1.0"
+paths:
+  /internal/frame/{resource}/{frame_index}:
+    get:
+      parameters:
+      - description: resource ID
+        in: path
+        name: resource
+        required: true
+        type: string
+      - description: relative frame index
+        in: path
+        name: frame_index
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: JPEG frame
+          schema:
+            type: string
+      summary: Get frames for a particular resource
+  /internal/peers/:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.PeerList'
+      summary: Get all currently connected peers
+swagger: "2.0"

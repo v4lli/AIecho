@@ -1,0 +1,24 @@
+services:
+  whipcapture:
+      restart: unless-stopped
+      build:
+        context: ./whipcapture
+        dockerfile: Dockerfile
+      ports:
+          - "127.0.0.1:9091:9091"
+          - "0.0.0.0:5000:5000/udp"
+  pipeline:
+      restart: unless-stopped
+      build:
+        context: ./pipeline
+        dockerfile: Dockerfile
+      environment:
+        - WHIPHOST=http://whipcapture:9091
+  frontend:
+      restart: unless-stopped
+      build:
+        context: ./frontend
+        dockerfile: Dockerfile
+      ports:
+          - "127.0.0.1:8080:8080"
+          - "127.0.0.1:8081:8081"
