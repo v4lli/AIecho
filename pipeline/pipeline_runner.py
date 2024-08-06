@@ -66,13 +66,12 @@ class PipelineThreadRunner(threading.Thread):
 
     def run(self):
         while True:
-            # logging.info("Running cleanup")
             with self.lock:
                 for resource, pipeline in self.resources:
                     if not self.threads[resource].is_alive():
                         self.threads[resource].join()
                         del self.threads[resource]
-                        self.resources.remove(resource)
+                        self.resources.remove((resource,pipeline))
                         logging.info("Removed dead pipeline for resource %s", resource)
             time.sleep(3)
 

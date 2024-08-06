@@ -54,12 +54,7 @@ export default function Home() {
                     transceiver1.setCodecPreferences(sortByMimeTypes(codecs1, ["video/VP8"])); // <---
                     console.log(`pc1 prefers ${[...new Set(codecs1.map(({ mimeType }) => mimeType))]}`);
                     let sendChannel = upPeer.createDataChannel('foo')
-                    //TODO: remove console
-                    sendChannel.onclose = () => console.log('sendChannel has closed')
-                    sendChannel.onopen = () => console.log('sendChannel has opened')
                     sendChannel.onmessage = e => {
-                        //TODO: remove console
-                        console.log(`dc '${sendChannel.label}' payload: '${e.data.trim()}'`)
                         let message = JSON.parse(e.data)
                         switch (message.type) {
                             case "desc":
@@ -84,8 +79,6 @@ export default function Home() {
                             localSDP += "\r\na=fastMode:${fastMode? 1:0}\r\n"
                             try {
                                 let UUID = self.crypto.randomUUID();
-                                //TODO: remove console
-                                console.log('UUID: ', UUID);
                                 const response = await fetch('https://api.aiecho.unimplemented.org/wish/whip/' + UUID + `/${fastMode ? 'fast' : 'normal'}`, {
                                     method: 'POST', headers: {
                                         'Content-Type': 'application/sdp'

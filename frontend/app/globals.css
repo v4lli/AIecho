@@ -109,6 +109,7 @@ video {
     gap: 10px;
 }
 
+
 button {
     background-color: var(--text-color); /* Orangish yellow background */
     color: var(--background-color); /* Black text */
@@ -119,6 +120,10 @@ button {
     cursor: pointer;
     border-radius: 5px;
     transition: background-color 0.3s;
+        display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
 button:hover {
@@ -176,13 +181,21 @@ footer {
         height: 30svh;
         flex-direction: row;
         gap: 10px;
+        justify-content: space-around;
+        padding : 0 10px;
+        align-items: center;
+        box-sizing: border-box;
         z-index: 100;
     }
-    button{
-        height: 50%;
+
+
+    video{
+        height: 40svh;
     }
-    label{
-    height: 50%;
+
+    .timeline-container{
+        height: 50svh;
+        width: 50svw;
     }
 }
 
@@ -193,6 +206,7 @@ footer {
     }
     .timeline-container{
         width: 80svw;
+        height: 40svh;
     }
 
     video{
@@ -207,8 +221,21 @@ footer {
         height: auto;
         margin-bottom: 20px;
     }
+    .startStop{
+        flex-direction: row;
+    }
     .settings-device{
         flex-direction: column;
+    }
+
+    @media(max-width: 1223px) and (orientation: landscape) {
+        .controls{
+            justify-content: space-evenly;
+            flex-direction: row;
+            width: 100%;
+            align-items: center;
+        }
+
     }
 }
 

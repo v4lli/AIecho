@@ -2,7 +2,6 @@ import {useEffect, useRef} from 'react';
 
 export const VideoCapture = ({onStream, videoDevice}) => {
     const videoRef = useRef(null);
-    const peerRef = useRef(null);
     useEffect(() => {
         const startStream = async () => {
             try {
@@ -18,5 +17,5 @@ export const VideoCapture = ({onStream, videoDevice}) => {
             startStream();
         }
     }, [videoDevice, onStream]);
-    return (<div className="video_container"><video aria-label={'Control Window for Video Upstream'} ref={videoRef} muted playsInline tabIndex={-1}/></div> );
+    return (<div className="video-container"><video aria-label={'Control Window for Video Upstream'} ref={videoRef} muted playsInline tabIndex={-1}/></div> );
 };

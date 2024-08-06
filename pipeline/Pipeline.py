@@ -4,6 +4,7 @@ import datetime
 import logging
 import os
 import itertools
+import sys
 import time
 from collections import deque
 
@@ -85,6 +86,9 @@ def retrieve_image():
         image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         image_points = cv2.goodFeaturesToTrack(image_gray, mask=None, **feature_params)
         image_queue.appendleft({"image": image, "image_points": image_points})
+    elif response.status_code == 404:
+            logging.error("Backend reports 404, client disconnected")
+            sys.exit(1)
 
 
 # Returns array of percentages of similarity, using optical flow, https://docs.opencv.org/4.x/d4/dee/tutorial_optical_flow.html
@@ -96,7 +100,11 @@ def similarity_processing():
     for image in list(image_queue)[1:]:
         image_2 = image["image"]
         image_2_points = image["image_points"]
+
+        if image_2_points is None or len(image_2_points) == 0:
+            continue
         image_2_gray = cv2.cvtColor(image_2, cv2.COLOR_BGR2GRAY)
+
         _, status, _ = cv2.calcOpticalFlowPyrLK(image_2_gray, image_1_gray, image_2_points, None, **lk_params)
         movement = np.mean(status)
         similarity_scores.append(movement)
@@ -156,7 +164,7 @@ def prompt_generator(similarity_scores):
         "temperature": 0,
         "messages": [{
             "role": "system",
-            "content": f"input: - 3 consecutive image to text descriptions, separator: ;,"
+            "content": f"input: - 3 consecutive images taken in the same scene, separator: ;,"
                        "output: combined single sentence scene description for visually impaired people, maximum length 50 words."
                        "output content: enumerate individual objects, people and their visual descriptions"
                        " rules:"

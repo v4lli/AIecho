@@ -59,6 +59,9 @@ func IsClosedDC(ch <-chan []byte) bool {
 }
 
 func (fc *FrameContainer) RemoveResource(resource string) {
+	if !fc.HasResource(resource) {
+		return
+	}
 	fc.lock.Lock()
 	defer fc.lock.Unlock()
 	if fc.DatachannelMap[resource] != nil && !IsClosedDC(fc.DatachannelMap[resource]) {
