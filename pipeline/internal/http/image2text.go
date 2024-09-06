@@ -4,18 +4,19 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/v4lli/AIecho/pipeline/internal/config"
-	"image"
-	"image/jpeg"
+	"gocv.io/x/gocv"
 	"log"
 	"net/http"
 	"strings"
 )
 
 type I2TPrompt struct {
-	Image       []byte    `json:"image"`
-	Temperature int       `json:"temperature"`
-	Messages    []Message `json:"messages"`
-	MaxTokens   int       `json:"max_tokens"`
+	Temperature float64   `json:"temperature"`
+	Prompt      string    `json:"prompt,omitempty"`
+	Raw         bool      `json:"raw,omitempty"`
+	Messages    []Message `json:"messages,omitempty"`
+	Image       []int     `json:"image"`
+	MaxTokens   int       `json:"max_tokens,omitempty"`
 }
 
 type Message struct {
@@ -23,23 +24,28 @@ type Message struct {
 	Content string `json:"content"`
 }
 
-func RunImage2Text(cfg *config.Config, img *image.Image, maxTokens int) string {
-
-	var buffer bytes.Buffer
-	err := jpeg.Encode(&buffer, *img, nil)
+func RunImage2Text(cfg *config.Config, img gocv.Mat, maxTokens int) string {
+	buffer, err := gocv.IMEncode(".png", img)
+	//displayImage(img)
 	if err != nil {
 		log.Printf("Error encoding image for i2t: %v", err)
 		return ""
 	}
+	bufferStorage := buffer.GetBytes()
+	intImageArray := make([]int, len(bufferStorage))
+	for i, b := range bufferStorage {
+		intImageArray[i] = int(b)
+	}
 	prompt := I2TPrompt{
-		Image:       buffer.Bytes(),
-		Temperature: 0,
+		Temperature: 0.7,
+		Raw:         true,
 		Messages: []Message{
 			{
 				Role:    "system",
 				Content: "Provide a detailed comma separated bullet point list of items, people and interactions in the image",
 			},
 		},
+		Image:     intImageArray,
 		MaxTokens: maxTokens,
 	}
 	jsonI2TPrompt, err := json.Marshal(prompt)
@@ -87,4 +93,11 @@ func sanitizeResponse(description string) string {
 		description = description[:index+1]
 	}
 	return description
+}
+
+func displayImage(mat gocv.Mat) {
+	window := gocv.NewWindow("trial")
+	defer window.Close()
+	window.IMShow(mat)
+	window.WaitKey(0)
 }

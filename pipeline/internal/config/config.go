@@ -24,6 +24,9 @@ func LoadConfig(filename string) *Config {
 	cloudflareAccountID := loadEnvVar("CLOUDFLARE_ACCOUNT_ID")
 	imageToTextModel := loadEnvVar("IMAGE_TO_TEXT_MODEL")
 	largeLanguageModel := loadEnvVar("LARGE_LANGUAGE_MODEL")
+	if cloudflareAPIKey == "" || cloudflareAccountID == "" || imageToTextModel == "" || largeLanguageModel == "" {
+		log.Fatalf("Empty environment value for required field")
+	}
 	return &Config{
 		CloudflareAPIKey:    cloudflareAPIKey,
 		CloudflareAccountID: cloudflareAccountID,
@@ -40,11 +43,15 @@ func (c *Config) GenerateHeader() http.Header {
 }
 
 func (c *Config) GenerateI2TURL() string {
-	return fmt.Sprintf("https://api.cloudflare.com/client/v4/accounts/%s/ai/run/%s", c.CloudflareAccountID, c.ImageToTextModel)
+	return fmt.Sprintf(
+		"https://api.cloudflare.com/client/v4/accounts/%s/ai/run/%s", c.CloudflareAccountID, c.ImageToTextModel,
+	)
 }
 
 func (c *Config) GenerateLLMURL() string {
-	return fmt.Sprintf("https://api.cloudflare.com/client/v4/accounts/%s/ai/run/%s", c.CloudflareAccountID, c.LargeLanguageModel)
+	return fmt.Sprintf(
+		"https://api.cloudflare.com/client/v4/accounts/%s/ai/run/%s", c.CloudflareAccountID, c.LargeLanguageModel,
+	)
 }
 
 func loadEnvVar(key string) string {

@@ -1,14 +1,14 @@
 package imageprocessing
 
 import (
+	"errors"
 	"gocv.io/x/gocv"
-	"image"
 	"log"
 )
 
 type ProcessedImage struct {
-	ImageGrey *gocv.Mat
-	Features  *gocv.Mat
+	ImageGrey gocv.Mat
+	Features  gocv.Mat
 }
 
 const (
@@ -17,19 +17,30 @@ const (
 	MinDistance  = 7
 )
 
-func ProcessImage(img *image.Image) (*ProcessedImage, error) {
-	cvImage, err := gocv.ImageToMatRGB(*img)
+func ProcessImage(img gocv.Mat) (*ProcessedImage, error) {
 	greyCVImage := gocv.NewMat()
-	gocv.CvtColor(cvImage, &greyCVImage, gocv.ColorBGRToGray)
-	if err != nil {
-		log.Printf("Error processing image to MatRGB %v", err)
-		return nil, err
+	gocv.CvtColor(img, &greyCVImage, gocv.ColorBGRToGray)
+	if greyCVImage.Empty() {
+		log.Printf("Error processing image to grey")
+		return nil, errors.New("Error processing image to grey")
 	}
 	goodFeatures := gocv.NewMat()
-	gocv.GoodFeaturesToTrack(cvImage, &goodFeatures, MaxCorners, QualityLevel, MinDistance)
+	gocv.GoodFeaturesToTrack(greyCVImage, &goodFeatures, MaxCorners, QualityLevel, MinDistance)
 	processedImage := ProcessedImage{
-		ImageGrey: &greyCVImage,
-		Features:  &goodFeatures,
+		ImageGrey: greyCVImage,
+		Features:  goodFeatures,
 	}
+	img.Close()
 	return &processedImage, nil
+}
+
+func (p ProcessedImage) Close() {
+	err := p.Features.Close()
+	if err != nil {
+		log.Printf("Error closing features")
+	}
+	err = p.ImageGrey.Close()
+	if err != nil {
+		log.Printf("Error closing grey image")
+	}
 }

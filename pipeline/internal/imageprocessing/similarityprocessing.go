@@ -2,13 +2,11 @@ package imageprocessing
 
 import (
 	"gocv.io/x/gocv"
-	"log"
 )
 
 func SimilarityProcessing(
 	latestImage *ProcessedImage, queue []ProcessedImage,
 ) []float64 {
-
 	latestGray := latestImage.ImageGrey
 	var result []float64
 	for _, img := range queue {
@@ -17,12 +15,12 @@ func SimilarityProcessing(
 		status := gocv.NewMat()
 		nextPts := gocv.NewMat()
 		err := gocv.NewMat()
-		gocv.CalcOpticalFlowPyrLK(*prevGray, *latestGray, *prevFeatures, nextPts, &status, &err)
-		if gocv.CountNonZero(err) > 0 {
-			log.Printf("Error calculating optical flow pyrLK: %v", err)
-		}
+		gocv.CalcOpticalFlowPyrLK(prevGray, latestGray, prevFeatures, nextPts, &status, &err)
 		score := float64(gocv.CountNonZero(status))
 		result = append(result, score)
+		status.Close()
+		nextPts.Close()
+		err.Close()
 	}
 	return result
 }

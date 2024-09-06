@@ -5,17 +5,22 @@ import (
 	"os"
 )
 
+var logFile *os.File
+
 func SetupLogging() {
-	logfile, err := os.OpenFile("pipeline.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	logFile, err := os.OpenFile("pipeline.log", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		log.Printf("error opening log file: %v", err)
 	}
-	defer func() {
-		if err := logfile.Close(); err != nil {
+
+	log.SetOutput(logFile)
+	log.SetFlags(log.Ldate | log.Lmicroseconds | log.Lshortfile)
+}
+
+func CloseLogging() {
+	if logFile != nil {
+		if err := logFile.Close(); err != nil {
 			log.Printf("error closing log file: %v", err)
 		}
-	}()
-
-	log.SetOutput(logfile)
-	log.SetFlags(log.Ldate | log.Lmicroseconds | log.Lshortfile)
+	}
 }

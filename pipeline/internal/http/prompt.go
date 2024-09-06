@@ -15,7 +15,7 @@ type LLMPrompt struct {
 
 var llmStorage []Message
 
-func RunLLM(cfg *config.Config, i2tResponse <-chan string, movement bool) string {
+func RunLLM(cfg *config.Config, i2tResponses []string, movement bool) string {
 	prompt := LLMPrompt{
 		Temperature: 0,
 		Messages: []Message{
@@ -32,7 +32,7 @@ func RunLLM(cfg *config.Config, i2tResponse <-chan string, movement bool) string
 			},
 		},
 	}
-	for i2t := range i2tResponse {
+	for _, i2t := range i2tResponses {
 		prompt.Messages = append(
 			prompt.Messages, Message{
 				Role:    "user",
@@ -83,7 +83,7 @@ func RunLLM(cfg *config.Config, i2tResponse <-chan string, movement bool) string
 			log.Printf("Error decoding LLM response: %v", jsonResponse["result"])
 			return ""
 		}
-		description := sanitizeResponse(result["description"].(string))
+		description := sanitizeResponse(result["response"].(string))
 		llmStorage = append(
 			llmStorage, Message{
 				Role:    "assistant",

@@ -1,32 +1,34 @@
 package pipeline
 
 import (
+	"errors"
+	"gocv.io/x/gocv"
 	"image"
-	"image/png"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 )
 
-func RetrieveImage(url string) (*image.Image, error) {
+func RetrieveImage(url string) (gocv.Mat, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Printf("Error retrieving image: %v", err)
-		return nil, err
+		return gocv.Mat{}, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusOK {
-		img, _, err := image.Decode(resp.Body)
+		_, _, err := image.Decode(resp.Body)
 		if err != nil {
-			return nil, err
+			return gocv.Mat{}, err
 		}
-		return &img, nil
+		return gocv.Mat{}, nil
 	} else if resp.StatusCode == http.StatusNotFound {
 		log.Fatal("Image not found, client disconnected")
 	} else {
 		log.Fatalf("Error retrieving image: %v", err)
 	}
+	return gocv.Mat{}, errors.New("image retrieval error")
 }
 
 var (
@@ -34,28 +36,26 @@ var (
 	index      int
 )
 
-func RetrieveDevelopmentImages(imageDir string) (*image.Image, error) {
+func RetrieveDevelopmentImages(imageDir string) (gocv.Mat, error) {
 	if imageFiles == nil {
 		files, err := readImageDirectory(imageDir)
 		if err != nil {
 			log.Printf("Error retrieving development images: %v", err)
-			return nil, err
+			return gocv.Mat{}, err
 		}
 		imageFiles = files
 		index = 0
 	}
-	file, err := os.Open(imageFiles[index])
-	if err != nil {
-		log.Printf("Error retrieving development images: %v", err)
-		return nil, err
+	img := gocv.IMRead(imageFiles[index], gocv.IMReadColor)
+	if img.Empty() {
+		log.Printf("Error retrieving development images: %v", imageFiles[index])
+		return gocv.Mat{}, errors.New("image retrieval error")
 	}
 	index++
-	img, err := png.Decode(file)
-	if err != nil {
-		log.Printf("Error decoding development images: %v", err)
-		return nil, err
+	if index >= len(imageFiles) {
+		index = 0
 	}
-	return &img, nil
+	return img, nil
 }
 
 func readImageDirectory(imageDir string) ([]string, error) {
