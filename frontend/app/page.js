@@ -9,6 +9,8 @@ import { useDispatch } from "react-redux";
 import { ADD_MESSAGE_DESC, ADD_MESSAGE_URGENT_DESC, RESET_DESC } from "@/actions/DescriptionActions";
 import { ADD_MESSAGE_TL, RESET_TL } from "@/actions/TimelineActions";
 import { Desktop, MobileLandscape, MobilePortrait } from "@/app/components/Responsive";
+import BoltIcon from "@mui/icons-material/Bolt";
+import {Info, InfoOutlined, InfoSharp, InfoTwoTone} from "@mui/icons-material";
 
 export default function Home() {
     const dispatch = useDispatch();
@@ -118,41 +120,44 @@ export default function Home() {
 
     return (<div className="flex flex-box">
         {isClient && (<>
-        <Desktop>
-            <div className="main-content">
-                <Timeline className="timeline" />
-                <VideoCapture className="video-capture" videoDevice={videoDeviceID} onStream={isStreaming} />
-            </div>
-            <div className="flex-row controls">
-                <div className="logo-container">
-                    <img src="/logo.png" alt="AIEcho Logo" />
+            <Desktop>
+                <div className="main-content">
+                    <Timeline className="timeline"/>
+                    <VideoCapture className="video-capture" videoDevice={videoDeviceID} onStream={isStreaming}/>
                 </div>
-                <Controls onStart={handleStart} onStop={handleStop} />
-                <Settings onVideoDeviceChange={setVideoDeviceID}  />
-                <AudioPlayer toggleFastMode={toggleFastMode} onStream={isStreaming} />
-            </div>
-        </Desktop>
-        <MobileLandscape>
-            <div className="main-content">
-                <Timeline className="timeline" />
-                <VideoCapture className="video-capture" videoDevice={videoDeviceID} onStream={isStreaming} />
-            </div>
-            <div className="controls">
-                <Controls onStart={handleStart} onStop={handleStop} />
-                <Settings onVideoDeviceChange={setVideoDeviceID}  />
-                <AudioPlayer toggleFastMode={toggleFastMode} onStream={isStreaming} />
-            </div>
-        </MobileLandscape>
-        <MobilePortrait>
-            <div className="main-content">
-                <Timeline className="timeline" />
-                <VideoCapture className="video-capture" videoDevice={videoDeviceID} onStream={isStreaming} />
-            </div>
-            <div className="controls">
-                <Controls onStart={handleStart} onStop={handleStop} />
-                <Settings onVideoDeviceChange={setVideoDeviceID} />
-                <AudioPlayer toggleFastMode={toggleFastMode} onStream={isStreaming} />
-            </div>
-        </MobilePortrait></>)}
+                <div className="flex-row controls">
+                    <div className="logo-container">
+                        <img src="/logo.png" alt="AIEcho Logo"/>
+                    </div>
+                    <Controls onStart={handleStart} onStop={handleStop}/>
+                    <Settings onVideoDeviceChange={setVideoDeviceID}/>
+                    <AudioPlayer toggleFastMode={toggleFastMode} onStream={isStreaming}/>
+                </div>
+            </Desktop>
+            <MobileLandscape>
+                <div className="main-content">
+                    <Timeline className="timeline"/>
+                    <VideoCapture className="video-capture" videoDevice={videoDeviceID} onStream={isStreaming}/>
+                </div>
+                <div className="controls">
+                    <Controls onStart={handleStart} onStop={handleStop}/>
+                    <Settings onVideoDeviceChange={setVideoDeviceID}/>
+                    <AudioPlayer toggleFastMode={toggleFastMode} onStream={isStreaming}/>
+                </div>
+            </MobileLandscape>
+            <MobilePortrait>
+                <div className="main-content">
+                    <Timeline className="timeline"/>
+                    <VideoCapture className="video-capture" videoDevice={videoDeviceID} onStream={isStreaming}/>
+                </div>
+                <div className="controls">
+                    <Controls onStart={handleStart} onStop={handleStop}/>
+                    <Settings onVideoDeviceChange={setVideoDeviceID}/>
+                    <AudioPlayer toggleFastMode={toggleFastMode} onStream={isStreaming}/>
+                </div>
+            </MobilePortrait></>)}
+        <div className="links"><InfoOutlined className="info-icon" /> AIEcho is a technology demonstration. Don't rely on it, the AI makes stuff up. Report an
+            issue or contribute on <a href="https://github.com/v4lli/AIecho">GitHub</a>. <a
+                href="https://meteocool.com/imprint">Imprint</a></div>
     </div>);
 }

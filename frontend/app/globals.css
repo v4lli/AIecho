@@ -89,7 +89,7 @@ video {
 /* Controls section */
 .controls {
     background-color: #111111; /* Very dark gray background for controls */
-    padding: 10px;
+    padding: 10px 10px 0px;
     border-radius: 8px;
     display: flex;
     flex-direction: row;
@@ -219,7 +219,6 @@ footer {
         flex-direction: column;
         bottom: 0;
         height: auto;
-        margin-bottom: 20px;
     }
     .startStop{
         flex-direction: row;
@@ -240,3 +239,23 @@ footer {
 }
 
 .video_container { }
+
+.links {
+    text-align: center;
+    font-size: 60%;
+    font-color: #a84800;
+    background-color: #111111;
+    height: 6em;
+}
+
+.info-icon {
+    width: 14px;
+    top: 8px;
+    position: relative;
+}
+
+
+
+.links a:visited {
+    color: var(--text-color);
+}
