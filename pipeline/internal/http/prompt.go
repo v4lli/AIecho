@@ -15,7 +15,7 @@ type LLMPrompt struct {
 
 var llmStorage []Message
 
-func RunLLM(cfg *config.Config, i2tResponses []string, movement bool) string {
+func RunLLM(cfg *config.Config, i2tResponses []string, movement bool) Result {
 	prompt := LLMPrompt{
 		Temperature: 0,
 		Messages: []Message{
@@ -56,32 +56,51 @@ func RunLLM(cfg *config.Config, i2tResponses []string, movement bool) string {
 	jsonLLMPrompt, err := json.Marshal(prompt)
 	if err != nil {
 		log.Printf("Error marshalling LLM prompt: %v", err)
-		return ""
+		return Result{
+			ResType: "error",
+			Content: "Error marshalling LLM prompt",
+			Urgent:  false,
+		}
 	}
 	url := cfg.GenerateLLMURL()
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonLLMPrompt))
 	if err != nil {
 		log.Printf("Error creating LLM request: %v", err)
-		return ""
+		return Result{
+			ResType: "error",
+			Content: "Error creating LLM request",
+			Urgent:  false,
+		}
 	}
 	req.Header = cfg.GenerateHeader()
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := (&http.Client{}).Do(req)
 	if err != nil {
 		log.Printf("Error creating LLM request: %v", err)
-		return ""
+		return Result{
+			ResType: "error",
+			Content: "Error creating LLM request",
+			Urgent:  false,
+		}
 	}
 	var jsonResponse map[string]interface{}
 	err = json.NewDecoder(resp.Body).Decode(&jsonResponse)
 	if err != nil {
 		log.Printf("Error unmarshalling LLM response: %v", err)
-		return ""
+		return Result{
+			ResType: "error",
+			Content: "Error unmarshalling LLM response",
+			Urgent:  false,
+		}
 	}
 	if resp.StatusCode == 200 {
 		result, ok := jsonResponse["result"].(map[string]interface{})
 		if !ok {
 			log.Printf("Error decoding LLM response: %v", jsonResponse["result"])
-			return ""
+			return Result{
+				ResType: "error",
+				Content: "Error decoding LLM response",
+				Urgent:  false,
+			}
 		}
 		description := sanitizeResponse(result["response"].(string))
 		llmStorage = append(
@@ -90,7 +109,15 @@ func RunLLM(cfg *config.Config, i2tResponses []string, movement bool) string {
 				Content: description,
 			},
 		)
-		return description
+		return Result{
+			ResType: "desc",
+			Content: description,
+			Urgent:  false,
+		}
 	}
-	return ""
+	return Result{
+		ResType: "error",
+		Content: "Error response not type 200",
+		Urgent:  false,
+	}
 }

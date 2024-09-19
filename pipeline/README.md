@@ -23,8 +23,10 @@ LARGE_LANGUAGE_MODEL="@cf/meta/llama-3-8b-instruct" #  in beta
 One of the two commandline options needs to specified to run the pipeline
 
 - ``--uuid`` specify the UUID of the upstream
+- `` --debug`` enables the sending of error messages to the frontend
 - ``--dev`` uses local images, need to provide directory
-- ``--fast`` enables fast mode in the backend, which removes the LLM summary and leads to only the image 2 text message being sent and voiced in the frontend
+- ``--fast`` enables fast mode in the backend, which removes the LLM summary and leads to only the image 2 text message
+  being sent and voiced in the frontend
 
 ## Development Images
 

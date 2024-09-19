@@ -11,7 +11,6 @@ import (
 	"github.com/v4lli/AIecho/pipeline/internal/pipeline"
 	"gocv.io/x/gocv"
 	"log"
-	"sync"
 	"time"
 )
 
@@ -20,20 +19,16 @@ const imageQueueLength = 3
 var (
 	uuid      string
 	devMode   bool
+	debugMode bool
 	imageDir  string
 	fastMode  bool
 	maxTokens int
 )
 
-type Result struct {
-	ResType string `json:"type"`
-	Content string `json:"content"`
-	Urgent  bool   `json:"urgent"`
-}
-
 func main() {
 	flag.StringVar(&uuid, "uuid", "", "UUID for upstream images")
-	flag.BoolVar(&devMode, "dev", false, "Enable dev mode")
+	flag.BoolVar(&devMode, "dev", false, "Enable dev mode, requires image directory")
+	flag.BoolVar(&debugMode, "debug", false, "Enable debug mode, sends errors to client")
 	flag.BoolVar(&fastMode, "fast", false, "Enable fast mode")
 	flag.Parse()
 	args := flag.Args()
@@ -56,8 +51,10 @@ func main() {
 		log.Printf("Production mode enabled")
 	}
 	if fastMode {
+		maxTokens = 50
 		log.Printf("Fast mode enabled")
 	} else {
+		maxTokens = 60
 		log.Printf("Fast mode disabled")
 	}
 
@@ -75,20 +72,20 @@ func main() {
 	cfg := config.LoadConfig("pipeline.env")
 	imageChannel1 := make(chan gocv.Mat)
 	imageChannel2 := make(chan gocv.Mat)
-	imageProcessingChannel := make(chan *imageprocessing.ProcessedImage, 1)
-	similarityChannel := make(chan []float64, 1)
-	movementChannel := make(chan bool, 1)
-	i2tImageRetChannel := make(chan bool, 1)
+	imageProcessingChannel := make(chan imageprocessing.ProcessedImage)
+	similarityChannel := make(chan []float64)
+	movementChannel := make(chan bool)
+	i2tImageRetChannel := make(chan bool)
 	i2tBufferChannel := make(chan string, 3)
-	i2tLLMChannel := make(chan bool, 1)
+	i2tLLMChannel := make(chan bool)
 
 	lastImageRetrieval := time.Now()
 	var imageQueue []imageprocessing.ProcessedImage
-	var mutex sync.Mutex
 	log.Print("Setup done, starting go routines")
+
 	go func() {
-		for _ = range i2tImageRetChannel {
-			//fmt.Printf("GOCV mat count at the beginning of imageRet: %d\n", gocv.MatProfile.Count())
+		log.Printf("Starting image retrieval routine")
+		for range i2tImageRetChannel {
 			timePassed := time.Since(lastImageRetrieval)
 			if timePassed < time.Second {
 				time.Sleep(time.Second - timePassed)
@@ -98,19 +95,17 @@ func main() {
 				log.Fatalf("Ending execution due to image retrieval error: %v", err)
 			} else {
 				if !fastMode {
-					//				imageChannel1 <- img
+					imageChannel1 <- img.Clone()
 				}
 				imageChannel2 <- img
 				lastImageRetrieval = time.Now()
 			}
-
-			//fmt.Printf("GOCV mat count at the end of imageRet: %d\n", gocv.MatProfile.Count())
 		}
 	}()
 
 	go func() {
+		log.Printf("Starting image processing routine")
 		for img := range imageChannel1 {
-			//fmt.Printf("GOCV mat count at the beginning of imageProc: %d\n", gocv.MatProfile.Count())
 			processedImage, err := imageprocessing.ProcessImage(img)
 			if err != nil {
 				log.Fatalf("Ending execution due to image processing error: %v", err)
@@ -120,27 +115,24 @@ func main() {
 			if err != nil {
 				log.Printf("Error closing image: %v", err)
 			}
-			//fmt.Printf("GOCV mat count at the end of imageProc: %d\n", gocv.MatProfile.Count())
 		}
 	}()
 
 	go func() {
+		log.Printf("Starting similarity processing routine")
 		for processedImage := range imageProcessingChannel {
-			mutex.Lock()
-			//fmt.Printf("GOCV mat count at beginning of simProc: %d\n", gocv.MatProfile.Count())
-			if len(imageQueue) > imageQueueLength {
+			if len(imageQueue) >= imageQueueLength {
 				imageQueue[0].Close()
 				imageQueue = imageQueue[1:]
 			}
 			scores := imageprocessing.SimilarityProcessing(processedImage, imageQueue)
-			imageQueue = append(imageQueue, *processedImage)
-			mutex.Unlock()
+			imageQueue = append(imageQueue, processedImage)
 			similarityChannel <- scores
-			//fmt.Printf("GOCV mat count at end of simProc: %d\n", gocv.MatProfile.Count())
 		}
 	}()
 
 	go func() {
+		log.Printf("Starting movement detection routine")
 		for scores := range similarityChannel {
 			movement := imageprocessing.MovementDetection(scores)
 			movementChannel <- movement
@@ -148,58 +140,53 @@ func main() {
 	}()
 
 	go func() {
+		log.Printf("Starting I2T routine")
 		for img := range imageChannel2 {
-			//fmt.Printf("GOCV mat count at beginning of i2t: %d\n", gocv.MatProfile.Count())
 			i2tDescription := http.RunImage2Text(cfg, img, maxTokens)
-			if i2tDescription == "" {
-				log.Printf("Got empty I2T response")
-			}
-			result := Result{
-				ResType: "tl",
-				Content: i2tDescription,
-				Urgent:  false,
-			}
-			resultJSON, err := json.Marshal(result)
+			resultJSON, err := json.Marshal(i2tDescription)
 			if err != nil {
 				log.Printf("Error marshalling i2t response: %v", err)
 			}
-			fmt.Println(string(resultJSON))
+			if i2tDescription.ResType == "error" {
+				if debugMode {
+					fmt.Println(string(resultJSON))
+				}
+			} else {
+				fmt.Println(string(resultJSON))
+			}
 			i2tImageRetChannel <- true
 			if !fastMode {
-				i2tBufferChannel <- i2tDescription
+				i2tBufferChannel <- i2tDescription.Content
 				if len(i2tBufferChannel) == 3 {
 					i2tLLMChannel <- true
 				}
 			}
-			//fmt.Printf("GOCV mat count at end of i2t: %d\n", gocv.MatProfile.Count())
 		}
 	}()
 
 	go func() {
-		for _ = range i2tLLMChannel {
-			//fmt.Printf("GOCV mat count at beginning of llm :%d\n", gocv.MatProfile.Count())
-			//llmDescription := http.RunLLM(cfg, i2tBufferChannel, <-movementChannel)
+		log.Printf("Starting LLM routine")
+		for range i2tLLMChannel {
 			var i2tResponses []string
 			for i := 0; i < 3; i++ {
 				i2tResponses = append(i2tResponses, <-i2tBufferChannel)
 			}
 			llmDescription := http.RunLLM(cfg, i2tResponses, true)
-			if llmDescription == "" {
-				log.Printf("Got empty LLM response")
-			}
-			result := Result{
-				ResType: "desc",
-				Content: llmDescription,
-				Urgent:  false,
-			}
-			resultJSON, err := json.Marshal(result)
+			resultJSON, err := json.Marshal(llmDescription)
 			if err != nil {
 				log.Printf("Error marshalling LLM response: %v", err)
 			}
-			fmt.Println(string(resultJSON))
+
+			if llmDescription.ResType == "error" {
+				if debugMode {
+					fmt.Println(string(resultJSON))
+				}
+			} else {
+				fmt.Println(string(resultJSON))
+			}
 		}
-		//fmt.Printf("GOCV mat count at end of llm :%d\n", gocv.MatProfile.Count())
 	}()
+
 	log.Printf("Started all routines")
 	i2tImageRetChannel <- true
 

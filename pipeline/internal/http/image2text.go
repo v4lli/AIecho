@@ -24,13 +24,24 @@ type Message struct {
 	Content string `json:"content"`
 }
 
-func RunImage2Text(cfg *config.Config, img gocv.Mat, maxTokens int) string {
+type Result struct {
+	ResType string `json:"type"`
+	Content string `json:"content"`
+	Urgent  bool   `json:"urgent"`
+}
+
+func RunImage2Text(cfg *config.Config, img gocv.Mat, maxTokens int) Result {
 	buffer, err := gocv.IMEncode(".png", img)
-	//displayImage(img)
 	if err != nil {
 		log.Printf("Error encoding image for i2t: %v", err)
-		return ""
+		return Result{
+			ResType: "error",
+			Content: "Error encoding image for i2t",
+			Urgent:  false,
+		}
 	}
+	defer buffer.Close()
+
 	bufferStorage := buffer.GetBytes()
 	intImageArray := make([]int, len(bufferStorage))
 	for i, b := range bufferStorage {
@@ -51,41 +62,78 @@ func RunImage2Text(cfg *config.Config, img gocv.Mat, maxTokens int) string {
 	jsonI2TPrompt, err := json.Marshal(prompt)
 	if err != nil {
 		log.Printf("Error encoding prompt: %v", err)
-		return ""
+		return Result{
+			ResType: "error",
+			Content: "Error encoding prompt",
+			Urgent:  false,
+		}
 	}
 	url := cfg.GenerateI2TURL()
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonI2TPrompt))
 	if err != nil {
 		log.Printf("Error creating request: %v", err)
-		return ""
+		return Result{
+			ResType: "error",
+			Content: "Error creating request",
+			Urgent:  false,
+		}
 	}
 	req.Header = cfg.GenerateHeader()
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := (&http.Client{}).Do(req)
 	if err != nil {
 		log.Printf("Error executing request: %v", err)
-		return ""
+		return Result{
+			ResType: "error",
+			Content: "Error executing request",
+			Urgent:  false,
+		}
 	}
 	defer resp.Body.Close()
+
+	imgErr := img.Close()
+	if imgErr != nil {
+		return Result{
+			ResType: "error",
+			Content: "Error closing image",
+			Urgent:  false,
+		}
+	}
 
 	var jsonResponse map[string]interface{}
 	err = json.NewDecoder(resp.Body).Decode(&jsonResponse)
 	if err != nil {
 		log.Printf("Error decoding response: %v", err)
-		return ""
+		return Result{
+			ResType: "error",
+			Content: "Error decoding response",
+			Urgent:  false,
+		}
 	}
+
 	if resp.StatusCode == 200 {
 		result, ok := jsonResponse["result"].(map[string]interface{})
 		if !ok {
 			log.Printf("Error decoding I2T response: %v", jsonResponse["result"])
-			return ""
+			return Result{
+				ResType: "error",
+				Content: "Error decoding I2T response",
+				Urgent:  false,
+			}
 		}
 		description := sanitizeResponse(result["description"].(string))
-		return description
+		return Result{
+			ResType: "tl",
+			Content: description,
+			Urgent:  false,
+		}
 	}
 	log.Printf("Error response not type 200, %v", jsonResponse)
-	return ""
+	return Result{
+		ResType: "error",
+		Content: "Error response not type 200",
+		Urgent:  false,
+	}
 }
 
 func sanitizeResponse(description string) string {
@@ -93,11 +141,4 @@ func sanitizeResponse(description string) string {
 		description = description[:index+1]
 	}
 	return description
-}
-
-func displayImage(mat gocv.Mat) {
-	window := gocv.NewWindow("trial")
-	defer window.Close()
-	window.IMShow(mat)
-	window.WaitKey(0)
 }

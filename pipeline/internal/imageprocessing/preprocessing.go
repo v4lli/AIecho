@@ -17,12 +17,12 @@ const (
 	MinDistance  = 7
 )
 
-func ProcessImage(img gocv.Mat) (*ProcessedImage, error) {
+func ProcessImage(img gocv.Mat) (ProcessedImage, error) {
 	greyCVImage := gocv.NewMat()
 	gocv.CvtColor(img, &greyCVImage, gocv.ColorBGRToGray)
 	if greyCVImage.Empty() {
 		log.Printf("Error processing image to grey")
-		return nil, errors.New("Error processing image to grey")
+		return ProcessedImage{}, errors.New("Error processing image to grey")
 	}
 	goodFeatures := gocv.NewMat()
 	gocv.GoodFeaturesToTrack(greyCVImage, &goodFeatures, MaxCorners, QualityLevel, MinDistance)
@@ -31,7 +31,7 @@ func ProcessImage(img gocv.Mat) (*ProcessedImage, error) {
 		Features:  goodFeatures,
 	}
 	img.Close()
-	return &processedImage, nil
+	return processedImage, nil
 }
 
 func (p ProcessedImage) Close() {

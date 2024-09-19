@@ -5,7 +5,7 @@ import (
 )
 
 func SimilarityProcessing(
-	latestImage *ProcessedImage, queue []ProcessedImage,
+	latestImage ProcessedImage, queue []ProcessedImage,
 ) []float64 {
 	latestGray := latestImage.ImageGrey
 	var result []float64
