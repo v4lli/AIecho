@@ -4,6 +4,8 @@ import (
 	"errors"
 	"gocv.io/x/gocv"
 	"image"
+	_ "image/jpeg"
+	_ "image/png"
 	"log"
 	"net/http"
 	"os"
@@ -18,15 +20,17 @@ func RetrieveImage(url string) (gocv.Mat, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusOK {
-		_, _, err := image.Decode(resp.Body)
+		img, _, err := image.Decode(resp.Body)
 		if err != nil {
 			return gocv.Mat{}, err
 		}
-		return gocv.Mat{}, nil
+		imgMat, err := gocv.ImageToMatRGB(img)
+		if err != nil {
+			return gocv.Mat{}, err
+		}
+		return imgMat, nil
 	} else if resp.StatusCode == http.StatusNotFound {
 		log.Fatal("Image not found, client disconnected")
-	} else {
-		log.Fatalf("Error retrieving image: %v", err)
 	}
 	return gocv.Mat{}, errors.New("image retrieval error")
 }

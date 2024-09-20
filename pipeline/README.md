@@ -21,6 +21,8 @@ LARGE_LANGUAGE_MODEL="@cf/meta/llama-3-8b-instruct" #  in beta
 ## Usage
 
 One of the two commandline options needs to specified to run the pipeline
+>[!CAUTION]
+> When using the ``--dev`` or ``--uuid`` option, place it at the end of the options
 
 - ``--uuid`` specify the UUID of the upstream
 - `` --debug`` enables the sending of error messages to the frontend
