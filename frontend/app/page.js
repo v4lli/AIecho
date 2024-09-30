@@ -156,8 +156,8 @@ export default function Home() {
                     <AudioPlayer toggleFastMode={toggleFastMode} onStream={isStreaming}/>
                 </div>
             </MobilePortrait></>)}
-        <div className="links"><InfoOutlined className="info-icon" /> AIEcho is a technology demonstration. Don't rely on it, the AI makes stuff up. Report an
-            issue or contribute on <a href="https://github.com/v4lli/AIecho">GitHub</a>. <a
-                href="https://meteocool.com/imprint">Imprint</a></div>
+        <div className="links"><InfoOutlined className="info-icon"/> <span>AIEcho is a technology demonstration.
+            Don&apos;t rely on it, the AI makes stuff up. Open source on <a href="https://github.com/v4lli/AIecho">GitHub</a>. <a
+                href="https://meteocool.com/imprint">Imprint</a></span></div>
     </div>);
 }

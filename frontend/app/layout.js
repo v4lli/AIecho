@@ -15,7 +15,7 @@ export default function RootLayout({children}) {
   return (<Provider store={store}>
     <html lang="en">
     <head>
-      <title>AIEcho</title>
+      <title>AIEcho Visual Assistant</title>
       <meta name="description" content="AI-based environment description service - 'be my eyes'. Free & open source!"/>
       <meta name="viewport" content="width=device-width, initial-scale=1"/>
       <meta name="application-name" content="AIEcho"/>
